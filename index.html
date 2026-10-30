@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MSCI ACWI en Euros (€) — Histórico desde 1999, KPIs y Rentabilidad Mensual</title>
+  <meta
+    name="description"
+    content="Panel interactivo de la evolución histórica del índice MSCI ACWI en euros (€) desde enero de 1999: gráfico por periodos, KPIs de rentabilidad y riesgo, y tabla mensual de rentabilidades."
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Cabecera -->
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="brand-badge" aria-hidden="true">€</div>
+        <div>
+          <div class="title-row">
+            <h1>MSCI ACWI en Euros</h1>
+            <span class="pill-tag" id="headerHistoryBadge">1999 – Presente</span>
+          </div>
+          <p class="subtitle">
+            Renta variable global (mercados desarrollados + emergentes) expresada en <strong>EUR</strong>
+          </p>
+        </div>
+      </div>
+
+      <div class="topbar-controls">
+        <div class="segmented-control" role="group" aria-label="Variante del índice">
+          <button
+            type="button"
+            class="seg-btn active"
+            data-variant="tr"
+            title="Incluye dividendos netos reinvertidos (equivalente a un ETF de acumulación)"
+          >
+            Total Return <span class="seg-sub">(Div. reinv.)</span>
+          </button>
+          <button
+            type="button"
+            class="seg-btn"
+            data-variant="pr"
+            title="Solo evolución del precio en euros, sin reinversión de dividendos"
+          >
+            Solo Precio
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="icon-btn"
+          id="themeToggleBtn"
+          aria-label="Cambiar tema claro/oscuro"
+          title="Cambiar tema claro/oscuro"
+        >
+          <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Estado de carga / error -->
+    <div id="statusBanner" class="status-banner" role="status" aria-live="polite">
+      Cargando histórico de MSCI ACWI en euros…
+    </div>
+
+    <main id="mainContent" class="main-content hidden">
+      <!-- Bloque principal: Resumen + Selector de periodo + Gráfico -->
+      <section class="card chart-section" aria-labelledby="chartHeading">
+        <div class="chart-header-top">
+          <div class="hero-metrics">
+            <div class="hero-label-row">
+              <span class="eyebrow" id="chartHeading">Evolución en el periodo seleccionado</span>
+              <span class="period-dates-badge" id="periodDateRange">—</span>
+              <button type="button" id="clearCustomYearBtn" class="reset-pill hidden">
+                ✕ Salir de vista anual
+              </button>
+            </div>
+
+            <div class="hero-numbers">
+              <span class="hero-return" id="heroReturnPct">—</span>
+              <span class="hero-level-detail" id="heroLevelDetail">—</span>
+            </div>
+
+            <div class="simulator-bar">
+              <label for="investmentInput" class="sim-label">Simulador:</label>
+              <div class="sim-input-wrap">
+                <input
+                  type="number"
+                  id="investmentInput"
+                  min="1"
+                  max="100000000"
+                  step="500"
+                  value="10000"
+                  aria-label="Importe inicial invertido en euros"
+                />
+                <span class="sim-curr">€</span>
+              </div>
+              <span class="sim-arrow">→</span>
+              <strong class="sim-result" id="simFinalValue">—</strong>
+              <span class="sim-diff" id="simProfitValue"></span>
+            </div>
+          </div>
+
+          <div class="controls-stack">
+            <!-- Botones de periodo solicitados -->
+            <div class="period-bar" role="group" aria-label="Seleccionar horizonte temporal">
+              <button type="button" class="period-btn" data-period="1D" title="Último día">1D</button>
+              <button type="button" class="period-btn" data-period="1W" title="Última semana">1S</button>
+              <button type="button" class="period-btn" data-period="1M" title="Último mes">1M</button>
+              <button type="button" class="period-btn" data-period="YTD" title="En lo que va de año (Year-To-Date)">YTD</button>
+              <button type="button" class="period-btn" data-period="1Y" title="Último año">1A</button>
+              <button type="button" class="period-btn" data-period="3Y" title="Últimos 3 años">3A</button>
+              <button type="button" class="period-btn" data-period="5Y" title="Últimos 5 años">5A</button>
+              <button type="button" class="period-btn" data-period="10Y" title="Últimos 10 años">10A</button>
+              <button type="button" class="period-btn" data-period="20Y" title="Últimos 20 años">20A</button>
+              <button type="button" class="period-btn active" data-period="ALL" title="Histórico completo desde dic. 1998">Todo</button>
+            </div>
+
+            <!-- Opciones secundarias del gráfico -->
+            <div class="chart-subcontrols">
+              <div class="chart-mode-group" role="group" aria-label="Modo de visualización del gráfico">
+                <button type="button" class="mode-chip active" data-chart-mode="value">Valor (€)</button>
+                <button type="button" class="mode-chip" data-chart-mode="pct">Rentabilidad (%)</button>
+                <button type="button" class="mode-chip" data-chart-mode="drawdown">Drawdown (%)</button>
+              </div>
+
+              <label class="log-toggle" id="logToggleWrap" title="Escala logarítmica para comparar crecimientos porcentuales de largo plazo">
+                <input type="checkbox" id="logScaleCheckbox" />
+                <span>Escala log</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lienzo del gráfico interactivo -->
+        <div class="chart-container" id="chartContainer">
+          <canvas id="priceChart"></canvas>
+          <div id="chartTooltip" class="chart-tooltip hidden" role="tooltip"></div>
+        </div>
+
+        <div class="chart-footnote" id="chartFootnote"></div>
+      </section>
+
+      <!-- KPIs del periodo seleccionado -->
+      <section class="kpi-section" aria-label="Indicadores clave del periodo">
+        <div class="kpi-grid">
+          <article class="card kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-title">Rentabilidad Acumulada</span>
+              <span class="kpi-hint" title="Variación porcentual total entre el inicio y el final del periodo seleccionado">ⓘ</span>
+            </div>
+            <div class="kpi-value" id="kpiTotalReturn">—</div>
+            <div class="kpi-sub" id="kpiTotalReturnSub">—</div>
+          </article>
+
+          <article class="card kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-title">Rentabilidad Anualizada (CAGR)</span>
+              <span class="kpi-hint" title="Tasa de crecimiento anual compuesto (TAE). Se calcula para periodos de al menos 1 año.">ⓘ</span>
+            </div>
+            <div class="kpi-value" id="kpiCagr">—</div>
+            <div class="kpi-sub" id="kpiCagrSub">—</div>
+          </article>
+
+          <article class="card kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-title">Volatilidad Anualizada</span>
+              <span class="kpi-hint" title="Desviación típica de los retornos diarios multiplicada por √252 sesiones bursátiles">ⓘ</span>
+            </div>
+            <div class="kpi-value" id="kpiVolatility">—</div>
+            <div class="kpi-sub" id="kpiVolatilitySub">—</div>
+          </article>
+
+          <article class="card kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-title">Máximo Drawdown</span>
+              <span class="kpi-hint" title="Mayor caída porcentual desde un máximo previo hasta su mínimo posterior dentro del periodo seleccionado">ⓘ</span>
+            </div>
+            <div class="kpi-value negative" id="kpiMaxDrawdown">—</div>
+            <div class="kpi-sub" id="kpiMaxDrawdownSub">—</div>
+          </article>
+
+          <article class="card kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-title">Ratio Retorno / Riesgo (Sharpe)</span>
+              <span class="kpi-hint" title="Rentabilidad anualizada dividida entre la volatilidad anualizada (asumiendo activo libre de riesgo Rf = 0%)">ⓘ</span>
+            </div>
+            <div class="kpi-value" id="kpiSharpe">—</div>
+            <div class="kpi-sub" id="kpiPositiveDaysSub">—</div>
+          </article>
+
+          <article class="card kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-title">Extremos del Periodo</span>
+              <span class="kpi-hint" title="Valores máximo y mínimo del índice (base 100) y mejor/peor sesión diaria del periodo">ⓘ</span>
+            </div>
+            <div class="kpi-value kpi-value-compact" id="kpiRange">—</div>
+            <div class="kpi-sub" id="kpiBestWorstDaySub">—</div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Tabla de rentabilidades mensuales por año -->
+      <section class="card table-section" aria-labelledby="monthlyTableHeading">
+        <div class="section-header">
+          <div>
+            <h2 id="monthlyTableHeading">Rentabilidades Mensuales y Anuales (%)</h2>
+            <p class="section-desc">
+              Cada celda muestra la rentabilidad en euros de dicho mes. Haz clic en cualquier <strong>año</strong> para inspeccionarlo en el gráfico superior.
+            </p>
+          </div>
+
+          <div class="table-actions">
+            <button type="button" class="action-btn" id="sortYearBtn" title="Invertir el orden de los años">
+              Orden: <span id="sortYearLabel">Recientes primero ↓</span>
+            </button>
+            <button type="button" class="action-btn" id="downloadCsvBtn" title="Descargar tabla mensual en formato CSV">
+              Descargar CSV
+            </button>
+          </div>
+        </div>
+
+        <div class="table-scroll-wrap">
+          <table class="monthly-table" id="monthlyTable">
+            <thead>
+              <tr>
+                <th scope="col" class="sticky-col year-col">Año</th>
+                <th scope="col">Ene</th>
+                <th scope="col">Feb</th>
+                <th scope="col">Mar</th>
+                <th scope="col">Abr</th>
+                <th scope="col">May</th>
+                <th scope="col">Jun</th>
+                <th scope="col">Jul</th>
+                <th scope="col">Ago</th>
+                <th scope="col">Sep</th>
+                <th scope="col">Oct</th>
+                <th scope="col">Nov</th>
+                <th scope="col">Dic</th>
+                <th scope="col" class="total-col">Total Año</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyTableBody"></tbody>
+            <tfoot id="monthlyTableFoot"></tfoot>
+          </table>
+        </div>
+      </section>
+
+      <!-- Nota metodológica y fuente de datos -->
+      <footer class="footer-info">
+        <div class="footer-grid">
+          <div>
+            <h3>Sobre los datos y metodología</h3>
+            <p id="methodologyText">
+              Serie histórica diaria expresada en euros (EUR) con base 100 el 31 de diciembre de 1998 (inicio de cotización del euro el 1 de enero de 1999).
+              Combina los niveles oficiales de MSCI ACWI EUR (Net Total Return desde dic. 2000 y Price Return desde dic. 1998 con ajuste de dividendos netos oficiales del propio índice en 1999–2000) junto con el ETF de acumulación <strong>iShares MSCI ACWI UCITS ETF EUR (IUSQ.DE)</strong> para datos intradía y respaldo diario automático.
+            </p>
+          </div>
+          <div class="footer-meta">
+            <div class="meta-line">
+              <span>Último cierre disponible:</span>
+              <strong id="metaLastDate">—</strong>
+            </div>
+            <div class="meta-line">
+              <span>Sesiones históricas:</span>
+              <strong id="metaTotalDays">—</strong>
+            </div>
+            <div class="meta-line">
+              <span>Referencia ETF (IUSQ.DE):</span>
+              <strong id="metaEtfPrice">—</strong>
+            </div>
+            <div class="meta-line">
+              <span>Actualizado:</span>
+              <strong id="metaUpdatedAt">—</strong>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
